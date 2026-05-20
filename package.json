@@ -1,0 +1,12 @@
+{
+  "name": "skils",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "hono": "^4.12.21",
+    "wrangler": "^4.93.0"
+  }
+}
