@@ -1,8 +1,9 @@
 {
   "name": "skils",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify",
+    "build-registry": "bun run scripts/build-registry.ts",
+    "dev": "bun run build-registry && wrangler dev",
+    "deploy": "bun run build-registry && wrangler deploy --minify",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {

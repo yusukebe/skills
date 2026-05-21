@@ -16,33 +16,40 @@ Each skill is small, opinionated (it reflects how _I_ like to do it), and includ
 
 ## How agents should use this
 
-The whole site is designed so an agent only needs **one** instruction:
+The site is designed so an agent only needs **one** instruction. The landing page (`/`) shows a copy-pasteable prompt:
 
-> Fetch <https://skills.yusuke.run> to start a project.
+> `fetch https://skills.yusuke.run/start.md to start a new project`
 
-The root response is a Markdown document that tells the agent what this site is, lists every available skill with its URL, and explains how to drill down. From there the agent fetches the individual skills it needs.
+Paste that into your coding agent at the start of a new project. From `/start.md` the agent discovers every available skill and drills down into the ones it needs.
 
 ## URL shape
 
-- `GET /` — agent entry point. Markdown: usage instructions + full skill index.
+- `GET /` — human-facing landing with the copy-pasteable agent prompt.
+- `GET /start.md` — agent entry point. Markdown: usage instructions + skill index.
 - `GET /skills/:id` — a single skill (Markdown).
-- `GET /skills.json` — machine-readable index (id, title, summary, tags).
+- `GET /skills/:id.json` — the same skill as JSON (frontmatter + body).
+- `GET /skills.json` — machine-readable full index (id, title, summary, tags, references, related).
 
-All content is served as `text/markdown; charset=utf-8` unless otherwise noted.
+All Markdown content is served as `text/markdown; charset=utf-8`.
 
 ## Repository layout
 
 ```text
 .
-├── AGENTS.md          # Instructions for AI agents working in this repo
-├── README.md          # This file
-├── skills/            # The skill Markdown files (flat — one file per skill)
+├── AGENTS.md                # Instructions for AI agents working in this repo
+├── README.md                # This file
+├── skills/                  # The skill Markdown files (flat — one file per skill)
 │   └── *.md
+├── scripts/
+│   └── build-registry.ts    # Scans skills/*.md, writes src/registry.generated.ts
 ├── src/
-│   ├── index.ts            # Hono routes
-│   ├── landing.ts          # Renders the agent-facing root Markdown
-│   ├── landing.template.md # Static prose for the root page (with placeholders)
-│   └── skills.ts           # Skill registry (imports every skill Markdown)
+│   ├── index.ts             # Hono routes
+│   ├── landing.ts           # Renders the / and /start.md responses
+│   ├── landing.template.md  # Template for /
+│   ├── start.template.md    # Template for /start.md (with {{skills}} placeholder)
+│   ├── frontmatter.ts       # Minimal YAML frontmatter parser
+│   ├── registry.generated.ts # Build output — frontmatter for every skill (gitignored)
+│   └── skills.ts            # Reads the generated registry, fetches bodies via env.ASSETS
 └── wrangler.jsonc
 ```
 
@@ -51,13 +58,28 @@ All content is served as `text/markdown; charset=utf-8` unless otherwise noted.
 See [AGENTS.md](./AGENTS.md) for the full contribution procedure. The short version:
 
 1. Create `skills/<id>.md` with the frontmatter shown in AGENTS.md.
-2. Register it in `src/skills.ts`.
-3. `bun run dev` to preview, `bun run deploy` to publish.
+2. `bun run dev` to preview (the registry is regenerated automatically from `skills/*.md`).
+3. Push to `main` — Cloudflare Workers Builds handles the deploy.
+
+From another working project, an agent can also open a PR for you — see the [`contribute`](https://skills.yusuke.run/skills/contribute) skill.
 
 ## Develop
 
 ```sh
 bun install
-bun run dev      # local preview
-bun run deploy   # deploy to skills.yusuke.run
+bun run dev      # local preview at http://localhost:8787
 ```
+
+## Deploy
+
+Deployment is automated via **Cloudflare Workers Builds**. Any push to `main` builds and deploys the Worker.
+
+Initial setup (one-time, in the Cloudflare dashboard):
+
+1. **Workers & Pages** → the `skills` Worker → **Settings** → **Builds**.
+2. **Connect** the GitHub repository `yusukebe/skills`.
+3. **Branch:** `main`.
+4. **Build command:** leave empty (or `bun install`).
+5. **Deploy command:** `bun run deploy`.
+
+`bun run deploy` regenerates `src/registry.generated.ts` from the current `skills/*.md` and then runs `wrangler deploy`. The build step is bundled into the `deploy` script so a manual local deploy can't forget it either.

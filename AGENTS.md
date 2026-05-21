@@ -21,13 +21,18 @@ Each skill is **a curated pointer into the open web**, not a reimplementation of
 ## Architecture
 
 - **Skill files** — `skills/<id>.md`, each with frontmatter (see below).
-- **Static Assets** — `skills/` is bound to the Worker as `env.ASSETS` (see `wrangler.jsonc`). Individual skill bodies are served directly from the Cloudflare edge via `env.ASSETS.fetch(...)`. `run_worker_first: true` keeps assets reachable only via the Worker, so the canonical URL is `/skills/<id>` and the underlying `.md` file is not directly exposed.
-- **Bundled index** — the wrangler `Text` rule also imports every `*.md` into the bundle, so `src/skills.ts` can build a typed registry of frontmatter at build time. The index page (`GET /`) and `GET /skills.json` are generated from that registry.
-- **Landing template** — the static prose of the agent entry document lives in `src/landing.template.md`, with `{{origin}}` and `{{skills}}` placeholders. `src/landing.ts` reads the template (also via the Text rule), renders each skill as a Markdown block, and substitutes the placeholders. Edit `landing.template.md` for wording changes; edit `landing.ts` only for structural changes to how skills are rendered.
+- **Static Assets** — `skills/` is bound to the Worker as `env.ASSETS` (see `wrangler.jsonc`). Skill bodies are served from the Cloudflare edge through `env.ASSETS.fetch(...)`. `run_worker_first: true` keeps assets reachable only via the Worker, so the canonical URL is `/skills/<id>` (the underlying `.md` is not directly exposed).
+- **Build-time registry** — `scripts/build-registry.ts` scans `skills/*.md`, parses the frontmatter of each, and writes `src/registry.generated.ts` before every `dev` or `deploy`. The generated module exports a typed `Frontmatter[]` that the Worker imports at build time — no runtime manifest fetch needed. `src/registry.generated.ts` is gitignored — it is regenerated on every build.
+- **Runtime read path** — `src/skills.ts` reads the registry directly from the bundled module (synchronous, zero I/O). Individual skill _bodies_ are fetched on demand via `env.ASSETS.fetch('/<id>.md')`. The Worker bundle contains no Markdown bodies — only frontmatter (via the generated registry) and the two small landing templates under `src/`.
+- **Templates** — two Markdown files under `src/` drive the agent-facing pages:
+  - `src/landing.template.md` — copy-pasteable prompt shown at `/`. Has only `{{origin}}` placeholder.
+  - `src/start.template.md` — the agent entry document served at `/start.md`. Has `{{origin}}` and `{{skills}}` placeholders. `src/landing.ts` reads both via the wrangler `Text` rule (which is scoped to `**/*.md`), renders each skill row as Markdown, and substitutes the placeholders. Edit these templates for wording changes; edit `landing.ts` only for structural changes to how skills are rendered.
 - **Routes**:
-  - `GET /` — agent entry point, Markdown. Built dynamically by `src/landing.ts`.
+  - `GET /` — human landing with the copy-pasteable agent prompt.
+  - `GET /start.md` — agent entry point: usage instructions + skill index.
   - `GET /skills/:id` — a single skill, Markdown. Served from `env.ASSETS`.
-  - `GET /skills.json` — machine-readable index.
+  - `GET /skills/:id.json` — the same skill as JSON (frontmatter + body).
+  - `GET /skills.json` — machine-readable full index (manifest + URLs).
 
 ## Frontmatter schema
 
@@ -56,12 +61,13 @@ Rules:
 ## Adding a new skill
 
 1. Pick a short, descriptive **id** in `kebab-case`. The id appears in the URL, so keep it stable. Examples: `hono`, `hono-inertia`, `cloudflare`.
-2. Create `skills/<id>.md` with the frontmatter above and a body that follows the philosophy section.
-3. Register the file in `src/skills.ts` by adding an import and a registry entry. This is explicit on purpose — the bundle stays deterministic and the type checker knows every id.
-4. `bun run dev` and verify:
-   - `curl http://localhost:8787/` shows the skill in the index.
+2. Create `skills/<id>.md` with the frontmatter above and a body that follows the philosophy section. **No registry edit is needed** — `scripts/build-registry.ts` re-discovers `skills/*.md` on every `dev`/`deploy`.
+3. `bun run dev` and verify:
+   - `curl http://localhost:8787/start.md` shows the skill in the index.
    - `curl http://localhost:8787/skills/<id>` returns the raw Markdown.
-5. `bun run deploy` to publish.
+4. Commit and push to `main`. Cloudflare Workers Builds deploys automatically (see README).
+
+If you want to contribute a skill from a _different_ working project (e.g. an agent in another repo deciding to capture some knowledge), see the [`contribute`](https://skills.yusuke.run/skills/contribute) skill — it documents the PR + auto-merge flow.
 
 ## Editing the Worker
 

@@ -1,15 +1,13 @@
 import { Hono, type Context } from 'hono'
 import { buildLanding, buildStart } from './landing'
-import { getSkill, listSkills } from './skills'
+import { getSkill, getSkillBody, listSkills } from './skills'
 
 const app = new Hono<{ Bindings: Env }>()
 
 const MARKDOWN = 'text/markdown; charset=utf-8'
 
-// Use the actual request Host header rather than `c.req.url`. `wrangler dev`
-// rewrites `c.req.url` to the configured custom domain (skills.yusuke.run),
-// so without this, local requests would also show production URLs in the
-// rendered Markdown.
+// `wrangler dev` rewrites `c.req.url` to the route's custom domain, so we
+// derive the public origin from the actual Host header instead.
 function getOrigin(c: Context): string {
   const url = new URL(c.req.url)
   const host = c.req.header('host') ?? url.host
@@ -28,16 +26,12 @@ app.get('/start.md', (c) => {
 
 app.get('/skills.json', (c) => {
   const origin = getOrigin(c)
-  const index = listSkills().map((s) => ({
-    id: s.id,
-    title: s.title,
-    summary: s.summary,
-    tags: s.tags,
-    references: s.references,
-    related: s.related,
-    url: `${origin}/skills/${s.id}`,
-  }))
-  return c.json({ skills: index })
+  return c.json({
+    skills: listSkills().map((s) => ({
+      ...s,
+      url: `${origin}/skills/${s.id}`,
+    })),
+  })
 })
 
 app.get('/skills/:file', async (c) => {
@@ -50,19 +44,14 @@ app.get('/skills/:file', async (c) => {
   }
   if (isJson) {
     const origin = getOrigin(c)
+    const body = await getSkillBody(c.env.ASSETS, c.req.url, id)
     return c.json({
-      id: skill.id,
-      title: skill.title,
-      summary: skill.summary,
-      tags: skill.tags,
-      references: skill.references,
-      related: skill.related,
+      ...skill,
       url: `${origin}/skills/${skill.id}`,
-      body: skill.body,
+      body,
     })
   }
-  const assetUrl = new URL(`/${id}.md`, c.req.url)
-  const res = await c.env.ASSETS.fetch(assetUrl)
+  const res = await c.env.ASSETS.fetch(new URL(`/${id}.md`, c.req.url))
   return new Response(res.body, {
     status: res.status,
     headers: { 'content-type': MARKDOWN },

@@ -8,8 +8,8 @@
   "assets": {
     "directory": "./skills",
     "binding": "ASSETS",
-    "run_worker_first": true
-  }
+    "run_worker_first": true,
+  },
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

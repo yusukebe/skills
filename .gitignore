@@ -2,3 +2,4 @@ bun.lock
 node_modules
 .wrangler
 .claude/settings.local.json
+src/registry.generated.ts
