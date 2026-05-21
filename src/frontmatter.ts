@@ -3,9 +3,9 @@
 // lists like `[a, b, c]`, and block lists with `- item` indented under a key.
 
 export type Frontmatter = {
-  id: string
+  name: string
   title: string
-  summary: string
+  description: string
   tags: string[]
   references: string[]
   related: string[]
@@ -76,9 +76,9 @@ function parseFrontmatter(yaml: string): Frontmatter {
   flushList()
 
   return {
-    id: String(data.id ?? ''),
+    name: String(data.name ?? ''),
     title: String(data.title ?? ''),
-    summary: String(data.summary ?? ''),
+    description: String(data.description ?? ''),
     tags: asArray(data.tags),
     references: asArray(data.references),
     related: asArray(data.related),

@@ -1,7 +1,7 @@
 ---
-id: hono-inertia
+name: hono-inertia
 title: Build SPA-feel apps with Inertia.js + Hono + hono/jsx
-summary: Use @hono/inertia on the server and @ts-76/inertia-hono-jsx on the client to get SPA-style interactivity without leaving the Hono/hono-jsx stack.
+description: Use @hono/inertia on the server and @ts-76/inertia-hono-jsx on the client to get SPA-style interactivity without leaving the Hono/hono-jsx stack.
 tags: [hono, inertia, hono-jsx, ui, spa, cloudflare-workers]
 references:
   - https://inertiajs.com/

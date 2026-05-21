@@ -29,7 +29,7 @@ app.get('/skills.json', (c) => {
   return c.json({
     skills: listSkills().map((s) => ({
       ...s,
-      url: `${origin}/skills/${s.id}`,
+      url: `${origin}/skills/${s.name}`,
     })),
   })
 })
@@ -37,21 +37,21 @@ app.get('/skills.json', (c) => {
 app.get('/skills/:file', async (c) => {
   const file = c.req.param('file')
   const isJson = file.endsWith('.json')
-  const id = isJson ? file.slice(0, -'.json'.length) : file
-  const skill = getSkill(id)
+  const name = isJson ? file.slice(0, -'.json'.length) : file
+  const skill = getSkill(name)
   if (!skill) {
     return c.notFound()
   }
   if (isJson) {
     const origin = getOrigin(c)
-    const body = await getSkillBody(c.env.ASSETS, c.req.url, id)
+    const body = await getSkillBody(c.env.ASSETS, c.req.url, name)
     return c.json({
       ...skill,
-      url: `${origin}/skills/${skill.id}`,
+      url: `${origin}/skills/${skill.name}`,
       body,
     })
   }
-  const res = await c.env.ASSETS.fetch(new URL(`/${id}.md`, c.req.url))
+  const res = await c.env.ASSETS.fetch(new URL(`/${name}/SKILL.md`, c.req.url))
   return new Response(res.body, {
     status: res.status,
     headers: { 'content-type': MARKDOWN },

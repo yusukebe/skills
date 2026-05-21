@@ -1,7 +1,7 @@
 ---
-id: cloudflare
+name: cloudflare
 title: Cloudflare Workers and the rest of the stack
-summary: Anything Cloudflare (Workers, D1, R2, KV, Durable Objects, Queues). Detailed guidance lives in the official cloudflare/skills collection.
+description: Anything Cloudflare (Workers, D1, R2, KV, Durable Objects, Queues). Detailed guidance lives in the official cloudflare/skills collection.
 tags: [cloudflare, workers, d1, r2, kv, durable-objects]
 references:
   - https://developers.cloudflare.com/workers/

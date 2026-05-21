@@ -1,7 +1,7 @@
 ---
-id: contribute
+name: contribute
 title: Add or update a skill on skills.yusuke.run
-summary: How to add or update a skill in yusukebe/skills from inside another working project. Owner-only — uses Yusuke's local gh CLI auth.
+description: How to add or update a skill in yusukebe/skills from inside another working project. Owner-only — uses Yusuke's local gh CLI auth.
 tags: [meta, github, gh, ci, owner-only]
 references:
   - https://github.com/yusukebe/skills
@@ -23,21 +23,21 @@ This skill describes how to contribute a new skill (or update an existing one) t
 
 ## The flow
 
-The registry is auto-generated from `skills/*.md` (see `scripts/build-registry.ts` in `yusukebe/skills`). So **all you need to add is one Markdown file**. PR → auto-merge → Cloudflare Workers Builds deploys.
+The catalog uses the `vercel-labs/skills` layout: each skill is a directory under `skills/` with a `SKILL.md` inside. The registry is regenerated automatically before each deploy from `skills/*/SKILL.md`, so all you need to add is one Markdown file in the right place. PR → auto-merge → Cloudflare Workers Builds deploys.
 
-### 1. Pick an id
+### 1. Pick a name
 
-`kebab-case`, short, descriptive. Look at the existing catalog at <https://skills.yusuke.run/skills.json> to keep naming consistent.
+`kebab-case`, short, descriptive. The name doubles as the directory name and the URL slug. Look at <https://skills.yusuke.run/skills.json> to keep naming consistent with the existing catalog.
 
 ### 2. Write the skill body locally
 
-Save it as `/tmp/<id>.md` (or any temp path). Required frontmatter:
+Save it as `/tmp/SKILL.md` (or any temp path). Required frontmatter — the `name` field is what `npx skills add` looks for:
 
 ```markdown
 ---
-id: <id>
+name: <name>
 title: <one-sentence title>
-summary: <one-line description shown in the root index>
+description: <one-line description shown in the root index>
 tags: [<lowercase>, <kebab-case>]
 references:
   - https://...
@@ -52,19 +52,21 @@ Follow the prose conventions: one paragraph per line, no hard wraps, English. Ai
 ### 3. Create a branch and add the file via the GitHub API
 
 ```sh
-ID=<id>
-BRANCH=add-skill-$ID
+NAME=<name>
+BRANCH=add-skill-$NAME
 MAIN_SHA=$(gh api repos/yusukebe/skills/git/refs/heads/main --jq '.object.sha')
 
 gh api repos/yusukebe/skills/git/refs \
   -f ref="refs/heads/$BRANCH" \
   -f sha="$MAIN_SHA"
 
-gh api -X PUT "repos/yusukebe/skills/contents/skills/$ID.md" \
-  -f message="add $ID skill" \
+gh api -X PUT "repos/yusukebe/skills/contents/skills/$NAME/SKILL.md" \
+  -f message="add $NAME skill" \
   -f branch="$BRANCH" \
-  -f content="$(base64 < /tmp/$ID.md)"
+  -f content="$(base64 < /tmp/SKILL.md)"
 ```
+
+Creating the file at the nested path `skills/$NAME/SKILL.md` implicitly creates the `skills/$NAME/` directory — there is no separate "create directory" call.
 
 ### 4. Open the PR and enable auto-merge
 
@@ -73,8 +75,8 @@ gh pr create \
   --repo yusukebe/skills \
   --base main \
   --head "$BRANCH" \
-  --title "add $ID skill" \
-  --body "Adds the \`$ID\` skill. Auto-proposed from another project."
+  --title "add $NAME skill" \
+  --body "Adds the \`$NAME\` skill. Auto-proposed from another project."
 
 gh pr merge --repo yusukebe/skills "$BRANCH" --squash --auto
 ```
@@ -86,19 +88,19 @@ Cloudflare Workers Builds picks up the merged commit on `main` and deploys.
 Same flow, but step 3 looks like this — fetch the current file's `sha` first and pass it in:
 
 ```sh
-ID=<id>
-BRANCH=update-skill-$ID
+NAME=<name>
+BRANCH=update-skill-$NAME
 MAIN_SHA=$(gh api repos/yusukebe/skills/git/refs/heads/main --jq '.object.sha')
-FILE_SHA=$(gh api "repos/yusukebe/skills/contents/skills/$ID.md?ref=main" --jq '.sha')
+FILE_SHA=$(gh api "repos/yusukebe/skills/contents/skills/$NAME/SKILL.md?ref=main" --jq '.sha')
 
 gh api repos/yusukebe/skills/git/refs \
   -f ref="refs/heads/$BRANCH" \
   -f sha="$MAIN_SHA"
 
-gh api -X PUT "repos/yusukebe/skills/contents/skills/$ID.md" \
-  -f message="update $ID skill" \
+gh api -X PUT "repos/yusukebe/skills/contents/skills/$NAME/SKILL.md" \
+  -f message="update $NAME skill" \
   -f branch="$BRANCH" \
-  -f content="$(base64 < /tmp/$ID.md)" \
+  -f content="$(base64 < /tmp/SKILL.md)" \
   -f sha="$FILE_SHA"
 ```
 

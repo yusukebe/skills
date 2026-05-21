@@ -1,7 +1,7 @@
 ---
-id: rj
+name: rj
 title: rj — print HTTP response metadata as JSON
-summary: yusukebe/rj is a tiny CLI that fetches a URL and prints the response metadata (status, headers, protocol, timing) as JSON. It does not print the body — use it alongside `curl`, not as a replacement.
+description: yusukebe/rj is a tiny CLI that fetches a URL and prints the response metadata (status, headers, protocol, timing) as JSON. It does not print the body — use it alongside `curl`, not as a replacement.
 tags: [cli, http, json, debugging]
 references:
   - https://github.com/yusukebe/rj

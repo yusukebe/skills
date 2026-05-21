@@ -1,7 +1,7 @@
 ---
-id: hono
+name: hono
 title: Hono — fast, edge-first web framework
-summary: Hono is the default web framework for any project here. Detailed guidance lives in the yusukebe/hono-skill collection on GitHub.
+description: Hono is the default web framework for any project here. Detailed guidance lives in the yusukebe/hono-skill collection on GitHub.
 tags: [hono, web, framework, cloudflare-workers]
 references:
   - https://hono.dev/

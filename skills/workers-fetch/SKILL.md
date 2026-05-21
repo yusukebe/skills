@@ -1,7 +1,7 @@
 ---
-id: workers-fetch
+name: workers-fetch
 title: workers-fetch — test a Cloudflare Worker without running a dev server
-summary: yusukebe/workers-fetch is a curl-like CLI that boots a Worker on demand from its wrangler config and sends a single request. Reach for it instead of `bun run dev` + `curl` when you just want to check one response.
+description: yusukebe/workers-fetch is a curl-like CLI that boots a Worker on demand from its wrangler config and sends a single request. Reach for it instead of `bun run dev` + `curl` when you just want to check one response.
 tags: [cli, cloudflare-workers, testing, http]
 references:
   - https://github.com/yusukebe/workers-fetch
