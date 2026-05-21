@@ -29,15 +29,23 @@ app.get('/skills.json', (c) => {
   return c.json({
     skills: listSkills().map((s) => ({
       ...s,
-      url: `${origin}/skills/${s.name}`,
+      url: `${origin}/skills/${s.name}.md`,
     })),
   })
 })
 
 app.get('/skills/:file', async (c) => {
   const file = c.req.param('file')
-  const isJson = file.endsWith('.json')
-  const name = isJson ? file.slice(0, -'.json'.length) : file
+  let name: string
+  let isJson = false
+  if (file.endsWith('.json')) {
+    name = file.slice(0, -'.json'.length)
+    isJson = true
+  } else if (file.endsWith('.md')) {
+    name = file.slice(0, -'.md'.length)
+  } else {
+    return c.notFound()
+  }
   const skill = getSkill(name)
   if (!skill) {
     return c.notFound()
@@ -47,7 +55,7 @@ app.get('/skills/:file', async (c) => {
     const body = await getSkillBody(c.env.ASSETS, c.req.url, name)
     return c.json({
       ...skill,
-      url: `${origin}/skills/${skill.name}`,
+      url: `${origin}/skills/${skill.name}.md`,
       body,
     })
   }

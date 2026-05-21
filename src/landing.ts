@@ -16,5 +16,5 @@ export function buildStart(origin: string = ORIGIN): string {
 }
 
 function renderSkill(skill: Skill, origin: string): string {
-  return `- [\`${skill.name}\`](${origin}/skills/${skill.name}) — ${skill.description}`
+  return `- [\`${skill.name}\`](${origin}/skills/${skill.name}.md) — ${skill.description}`
 }
